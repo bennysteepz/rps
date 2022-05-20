@@ -74,13 +74,7 @@ public class RebuildAgentMojo extends AbstractMojo {
         TxtWork txtWork = new TxtWork(); // contains methods for working with .txt files
         FileWork fileWork = new FileWork(); // contains general methods for all file types
 	
-        List<String> affectedClasses = getAffectedClasses("pom.xml", "starts:diff");
-        for (String affectedClass : affectedClasses) {
-            getLog().info("log class below!!");
-            getLog().info(affectedClass);
-        }
-	
-        // 2. EXTRACT JAR
+        // EXTRACT JAR
         // Make directory in agents called "extracted" to put extracted files in
         new File(extractedPath).mkdirs();
         try {
@@ -92,21 +86,6 @@ public class RebuildAgentMojo extends AbstractMojo {
             e.printStackTrace();
         }
 
-        // 3. CREATE specListAll.txt in client plugin root dir FROM aop-ajc.xml in agents
-        // Read aop-ajc.xml file
-        // Store specs from xml tags in List<String> allSpecs
-        //List<String> allSpecs = xmlWork.readXml(xmlFilePath);
-	List<String> allSpecs = txtWork.getLines(txtAllSpecsFilePath);
-	
-	HashSet<String> affectedSpecs = getAffectedSpecs(allSpecs, affectedClasses);
-        List<String> specsToInclude = new ArrayList<String>();
-        getLog().info("before spec for loop");
-        for (String spec : affectedSpecs) {
-            getLog().info("log spec below!!:");
-            getLog().info(spec);
-            specsToInclude.add(spec);
-        }
-
         // INITIALIZE: IF allSpecs.txt DOES NOT EXIST THEN THIS IS THE FIRST PLUGIN RUN
         // "mvn clean" CAN ALSO REVERT PLUGIN BACK TO PRE-INITIALIZED STATE
         File f = new File(txtAllSpecsFilePath);
@@ -116,15 +95,33 @@ public class RebuildAgentMojo extends AbstractMojo {
             // Create allSpecs.txt and write allSpecs to it
             txtWork.createTxtFile(txtAllSpecsFilePath);
             // Write aop-ajc.xml spec strings to specListAll.txt
-            txtWork.writeTxtFile(txtAllSpecsFilePath, allSpecs);
+            List<String> freshSpecs = xmlWork.readXml(xmlFilePath);
+            txtWork.writeTxtFile(txtAllSpecsFilePath, freshSpecs);
             // Run "starts:run" in client app to start detecting code changes
             fileWork.invokeMaven("pom.xml", "starts:run");
         } else {
             getLog().info("ALREADY INITIALIZED");
         }
 
+        // GET AFFECTED SPECS WITH AFFECTED CLASSES
+        List<String> affectedClasses = getAffectedClasses("pom.xml", "starts:diff");
+        for (String affectedClass : affectedClasses) {
+            getLog().info("log class below!!");
+            getLog().info(affectedClass);
+        }
+        List<String> allSpecs = txtWork.getLines(txtAllSpecsFilePath);
+	    HashSet<String> affectedSpecs = getAffectedSpecs(allSpecs, affectedClasses);
+        List<String> specsToInclude = new ArrayList<String>();
+        getLog().info("before spec for loop");
+        for (String spec : affectedSpecs) {
+            getLog().info("log spec below!!:");
+            getLog().info(spec);
+            specsToInclude.add(spec);
+        }
+
+        // REBUILD aop-ajc.xml
         // First remove old xml file to replace
-        // (later found out this is unnecessary, but I suppose it can't hurt to assure old file is gone)
+        // (later found out this is unnecessary, but suppose it can't hurt to assure old file is gone)
         fileWork.deleteFile(xmlFilePath);
         // Create new XML file with specsToInclude
         try {
@@ -135,7 +132,7 @@ public class RebuildAgentMojo extends AbstractMojo {
             e.printStackTrace();
         }
 
-        // 5. REBUILD the JAR
+        // REBUILD the JAR
         // Create new jar in agents directory
         try {
             // Get the current manifest and pass it into the createJar() method
@@ -148,11 +145,11 @@ public class RebuildAgentMojo extends AbstractMojo {
             e.printStackTrace();
         }
 
-        // 6. INSTALL JAR AGENT in the client plugin
+        // INSTALL JAR AGENT in the client plugin
         fileWork.invokeMaven(clientPomPath, "install:install-file");
 
-	// Run starts:run so that the next time diff is called the changes will be detected
-	fileWork.invokeMaven("pom.xml", "starts:run");
+        // RUN starts:run so that the next time diff is called the changes will be detected
+        fileWork.invokeMaven("pom.xml", "starts:run");
     }
     
     
