@@ -103,7 +103,7 @@ public class RebuildAgentMojo extends AbstractMojo {
             fileWork.invokeMaven("pom.xml", "starts:run");
         } else {
             getLog().info("ALREADY INITIALIZED");
-            // If second run or later grab allSpecs from the text file
+            // If second run or later, then grab allSpecs from the text file
             allSpecs = txtWork.getLines(txtAllSpecsFilePath);
         }
 
@@ -114,6 +114,10 @@ public class RebuildAgentMojo extends AbstractMojo {
             getLog().info(affectedClass);
         }
 
+        getLog().info("LOG OUT allSpecs");
+        for (String s : allSpecs) {
+            getLog().info("SPEC: " + s);
+        }
 	    HashSet<String> affectedSpecs = getAffectedSpecs(allSpecs, affectedClasses);
         List<String> specsToInclude = new ArrayList<String>();
         getLog().info("before spec for loop");
