@@ -118,6 +118,7 @@ public class RebuildAgentMojo extends AbstractMojo {
         for (String s : allSpecs) {
             getLog().info("SPEC: " + s);
         }
+        allSpecs.add("mop.BaseAspect");
 	    HashSet<String> affectedSpecs = getAffectedSpecs(allSpecs, affectedClasses);
         List<String> specsToInclude = new ArrayList<String>();
         getLog().info("before spec for loop");
