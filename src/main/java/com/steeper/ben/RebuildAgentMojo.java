@@ -81,7 +81,7 @@ public class RebuildAgentMojo extends AbstractMojo {
             // Extract Jar file - arguments: jar path followed by destination path
             jarWork.extractJar(jarFilePath, extractedPath);
             // Delete jar that was just extracted
-            fileWork.deleteFile(jarFilePath);
+//            fileWork.deleteFile(jarFilePath);
         } catch (IOException e) {
             e.printStackTrace();
         }
