@@ -119,6 +119,8 @@ public class RebuildAgentMojo extends AbstractMojo {
             txtWork.writeTxtFile(txtAllSpecsFilePath, allSpecs);
             // Run "starts:run" in client app to start detecting code changes
             fileWork.invokeMaven("pom.xml", "starts:run");
+        } else {
+            getLog().info("ALREADY INITIALIZED");
         }
 
         // First remove old xml file to replace
