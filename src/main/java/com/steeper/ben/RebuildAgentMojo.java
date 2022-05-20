@@ -89,18 +89,22 @@ public class RebuildAgentMojo extends AbstractMojo {
         // INITIALIZE: IF allSpecs.txt DOES NOT EXIST THEN THIS IS THE FIRST PLUGIN RUN
         // "mvn clean" CAN ALSO REVERT PLUGIN BACK TO PRE-INITIALIZED STATE
         File f = new File(txtAllSpecsFilePath);
+        List<String> allSpecs;
         if (!f.exists()) {
             getLog().info("FILE DOES NOT EXIST");
             getLog().info("INITIALIZE...");
             // Create allSpecs.txt and write allSpecs to it
             txtWork.createTxtFile(txtAllSpecsFilePath);
             // Write aop-ajc.xml spec strings to specListAll.txt
-            List<String> freshSpecs = xmlWork.readXml(xmlFilePath);
-            txtWork.writeTxtFile(txtAllSpecsFilePath, freshSpecs);
+            // If first run, get allSpecs from xml and write to text file
+            allSpecs = xmlWork.readXml(xmlFilePath);
+            txtWork.writeTxtFile(txtAllSpecsFilePath, allSpecs);
             // Run "starts:run" in client app to start detecting code changes
             fileWork.invokeMaven("pom.xml", "starts:run");
         } else {
             getLog().info("ALREADY INITIALIZED");
+            // If second run or later grab allSpecs from the text file
+            allSpecs = txtWork.getLines(txtAllSpecsFilePath);
         }
 
         // GET AFFECTED SPECS WITH AFFECTED CLASSES
@@ -109,7 +113,7 @@ public class RebuildAgentMojo extends AbstractMojo {
             getLog().info("log class below!!");
             getLog().info(affectedClass);
         }
-        List<String> allSpecs = txtWork.getLines(txtAllSpecsFilePath);
+
 	    HashSet<String> affectedSpecs = getAffectedSpecs(allSpecs, affectedClasses);
         List<String> specsToInclude = new ArrayList<String>();
         getLog().info("before spec for loop");
